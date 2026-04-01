@@ -77,80 +77,70 @@
         </div>
     </div>
 
-    <script>
-        // 你的脚本代码库数据库 (这里存放你从原图复制来的代码)
+<script>
+        // ⬇️ 以后你只需要在这里添加或修改你的脚本 ⬇️
         const scriptLibrary = {
             'clearAK.gs': {
-                icon: 'description',
-                code: `<span class="pl-k">function</span> <span class="pl-en">clearTreeSheetsOnly</span>() {
-  <span class="pl-k">var</span> <span class="pl-v">spreadsheet</span> \= <span class="pl-v">SpreadsheetApp</span>.<span class="pl-en">getActiveSpreadsheet</span>();
-  <span class="pl-k">var</span> <span class="pl-v">sheets</span> \= <span class="pl-v">spreadsheet</span>.<span class="pl-en">getSheets</span>();
+                icon: 'description', // 图标名称
+                code: `function clearTreeSheetsOnly() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheets = spreadsheet.getSheets();
   
-  <span class="pl-c">// 循环检查每一个分页</span>
-  <span class="pl-k">for</span> (<span class="pl-k">var</span> <span class="pl-v">i</span> \= <span class="pl-c1">0</span>; <span class="pl-v">i</span> < <span class="pl-v">sheets</span>.<span class="pl-v">length</span>; <span class="pl-v">i</span>++) {
-    <span class="pl-k">var</span> <span class="pl-v">sheet</span> \= <span class="pl-v">sheets</span>[<span class="pl-v">i</span>];
-    <span class="pl-k">var</span> <span class="pl-v">sheetName</span> \= <span class="pl-v">sheet</span>.<span class="pl-en">getName</span>();
+  // 循环检查每一个分页
+  for (var i = 0; i < sheets.length; i++) {
+    var sheet = sheets[i];
+    var sheetName = sheet.getName();
     
-    <span class="pl-c">// 只有名字以 🌴 开头的分页才处理</span>
-    <span class="pl-k">if</span> (<span class="pl-v">sheetName</span>.<span class="pl-en">startsWith</span>(<span class="pl-s">"🌴"</span>)) {
-      <span class="pl-c">// ... 你的更多代码 ...</span>
-      <span class="pl-c">// rangeAE.clear();</span>
+    // 只有名字以 🌴 开头的分页才处理
+    if (sheetName.startsWith("🌴")) {
+      // 这里粘贴你具体的逻辑代码
     }
   }
 }`
             },
             '自动修复.gs': {
                 icon: 'build',
-                code: `<span class="pl-k">function</span> <span class="pl-en">autoRepairData</span>() {
-  <span class="pl-c">// 这是一个示例修复脚本</span>
-  <span class="pl-v">console</span>.<span class="pl-en">log</span>(<span class="pl-s">"正在扫描数据错误..."</span>);
-  <span class="pl-v">Utilities</span>.<span class="pl-en">sleep</span>(<span class="pl-c1">1000</span>);
-  <span class="pl-v">console</span>.<span class="pl-en">log</span>(<span class="pl-s">"未发现明显错误。"</span>);
+                code: `function autoRepair() {
+  console.log("正在修复...");
+  // 把你的代码直接粘贴到这两个反引号之间
 }`
             },
-            '修复日期.gs': { icon: 'calendar_today', code: `// 日期修复逻辑...` },
-            '记录锁定.gs': { icon: 'lock', code: `// 锁定逻辑...` }
+            '我的新脚本.gs': {
+                icon: 'code',
+                code: `// 在这里粘贴你的第三个脚本...`
+            }
         };
+        // ⬆️ 修改区域结束 ⬆️
 
+
+        // 下面是网页的运行逻辑，不需要修改
         const fileListParams = document.getElementById('file-list');
         const codeDisplayParams = document.getElementById('code-display');
         const currentFileNameParams = document.getElementById('current-file-name');
 
-        // 初始化文件列表
         function initFileList() {
-            fileListParams.innerHTML = ''; // 清空
+            fileListParams.innerHTML = ''; 
             Object.keys(scriptLibrary).forEach((fileName, index) => {
                 const fileData = scriptLibrary[fileName];
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
                 fileItem.onclick = () => loadCode(fileName);
-                fileItem.innerHTML = \`<span class="material-icons file-icon">\${fileData.icon}</span>\${fileName}\`;
+                fileItem.innerHTML = '<span class="material-icons file-icon">' + fileData.icon + '</span>' + fileName;
                 fileListParams.appendChild(fileItem);
                 
-                // 默认加载第一个文件
-                if (index === 0) {
-                    loadCode(fileName);
-                }
+                if (index === 0) loadCode(fileName);
             });
         }
 
-        // 加载代码
         function loadCode(fileName) {
-            // 更新标题
             currentFileNameParams.innerText = fileName;
-            // 更新代码内容 (使用 innerHTML 以便显示高亮)
-            codeDisplayParams.innerHTML = scriptLibrary[fileName].code;
+            // 使用 textContent 确保你粘贴的任何代码都能原样显示，不会错乱
+            codeDisplayParams.textContent = scriptLibrary[fileName].code;
             
-            // 更新高亮状态
             const allItems = document.querySelectorAll('.file-item');
             allItems.forEach(item => item.classList.remove('active'));
-            // 找到对应的节点并添加 active
             Array.from(allItems).find(item => item.innerText.includes(fileName)).classList.add('active');
         }
 
-        // 启动
         initFileList();
-
     </script>
-</body>
-</html>
