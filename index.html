@@ -6,8 +6,8 @@
     <style>
         :root {
             --google-blue: #1a73e8;
-            --sidebar-bg: #f8f9fa; 
-            --code-bg: #ffffff; /* 现代代码编辑器多用浅色 */
+            --sidebar-bg: #f8f9fa;
+            --code-bg: #ffffff;
             --text-color: #3c4043;
             --border-color: #dadce0;
         }
@@ -38,7 +38,6 @@
         
         /* 代码显示样式 */
         pre { margin: 0; padding: 16px; font-family: 'Roboto Mono', monospace; font-size: 13px; line-height: 1.5; tab-size: 2; color: #3c4043; }
-
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Roboto+Mono&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -73,132 +72,42 @@
     </div>
 
     <script>
-        // ⬇️ 以后你只需要在这里添加或修改你的脚本 ⬇️
+        // ⬇️ 你的脚本代码库 ⬇️
         const scriptLibrary = {
-            'clearAK.gs': {
-                icon: 'description', // 图标名称
-                code: `function clearTreeSheetsOnly() {
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var sheets = spreadsheet.getSheets();
-  
-  // 循环检查每一个分页
-  for (var i = 0; i < sheets.length; i++) {
-    var sheet = sheets[i];
-    var sheetName = sheet.getName();
-    
-    // 只有名字以 🌴 开头的分页才处理
-    if (sheetName.startsWith("🌴")) {
-      // 这里粘贴你具体的逻辑代码
+            '自动删除列.gs': {
+                icon: 'delete_sweep', // 扫把图标，代表清理
+                code: `function 自动删除多余列() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheets = ss.getSheets();
+  const maxColumnLetter = 'CB'; // 从这里修改保留到哪一列
+
+  const maxColumns = 列字母转数字(maxColumnLetter);
+
+  sheets.forEach(sheet => {
+    if (!sheet.getName().startsWith('🌳')) return;
+
+    const lastColumn = sheet.getMaxColumns();
+
+    if (lastColumn > maxColumns) {
+      const deleteCount = lastColumn - maxColumns;
+      sheet.deleteColumns(maxColumns + 1, deleteCount);
     }
-  }
-}`
-            },
-            '自动修复.gs': {
-                icon: 'build',
-                code: `function autoRepair() {
-  console.log("function clearTreeSheetsOnly() {
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var sheets = spreadsheet.getSheets();
-
-  // 循环检查每一个分页
-  for (var i = 0; i < sheets.length; i++) {
-    var sheet = sheets[i];
-    var sheetName = sheet.getName();
-
-    // 只有名字以 🌳 开头的分页才处理
-    if (sheetName.startsWith("🌳")) {
-      
-      var maxRows = sheet.getMaxRows();
-      var startRow = 4; // 从第4行开始
-
-      if (maxRows >= startRow) {
-        var numRows = maxRows - startRow + 1;
-
-        // --- 处理 AE 列 (第31列) ---
-        var rangeAE = sheet.getRange(startRow, 31, numRows, 1);
-        rangeAE.clear();              // 清除内容和格式
-        rangeAE.clearNote();          // 【新增】强制清除备注
-        rangeAE.clearDataValidations();// 【额外保险】清除下拉框等验证规则
-
-        // --- 处理 AK 列 (第37列) ---
-        var rangeAK = sheet.getRange(startRow, 37, numRows, 1);
-        rangeAK.clear();              // 清除内容和格式
-        rangeAK.clearNote();          // 【新增】强制清除备注
-        rangeAK.clearDataValidations();// 【额外保险】清除下拉框等验证规则
-      }
-    }
-  }
-  // 这里不再有弹窗代码
+  });
 }
 
-function detectingDuplicates () {
-  const list = [
-    '17XkqB0zh7CpeuMKmUwkorkxfCmlnpcyiDG0awugA5ZM',
-    '1lMr-JKGK3Z3CYmhuMkaBADi10_Y74iAsfTTUSvpKVDE',
-    '1kxP_XNWdYzrhJweTFLXka8nltiO7hqWtmIJPoCgFLGE'
-  ]
-  const data = []
-  for (const sheetId of list) {
-    const values = Sheets.Spreadsheets.Values.get(sheetId, '压缩!C:D').values
-    for (let i = 0; i < values.length; i++) {
-      if (sheetId !== '1lMr-JKGK3Z3CYmhuMkaBADi10_Y74iAsfTTUSvpKVDE') {
-        if (values[i][1] !== '哥伦比亚9点半队') {
-          data.push([values[i][0], values[i][1]])
-        }
-      } else {
-        data.push([values[i][0], values[i][1]])
-      }
-    }
+function 列字母转数字(columnLetter) {
+  let columnNumber = 0;
+  const letters = columnLetter.toUpperCase();
+
+  for (let i = 0; i < letters.length; i++) {
+    columnNumber = columnNumber * 26 + (letters.charCodeAt(i) - 64);
   }
-  const churchData = Sheets.Spreadsheets.Values.get('1Yslef5olbO3BQAtaPHekyhX7b-oLxzfVUPUoL7dqcDU', '精简!C:C').values
-  const orig = SpreadsheetApp.getActiveSheet().getRange('R3:R')
-  const origIds = orig.getDisplayValues()
-  const backgroundColor = []
-  const notes = []
-  for (let i = 0; i < origIds.length; i++) {
-    const id = origIds[i][0]
-    if (!id || id.includes('http')) {
-      backgroundColor.push([''])
-      notes.push([''])
-    } else {
-      const arr = data.filter(x => (x[0] || '').includes(id))
-      const churchArr = churchData.filter(x => (x[0] || '').includes(id))
-      if (arr.length > 1 || churchArr.length > 0) {
-        let text = ''
-        let churchText = ''
-        if (arr.length > 1) {
-            text = arr.map(x => {
-            const info = x[0].split('☢')
-            const serialNumber = Number(info[7])
-            const date = new Date(1899, 11, 30)
-            date.setDate(date.getDate() + serialNumber)
-            return `队：${info[9]}_${x[1]}\n摸底人员：${info[10]}\n提交日期：${date.toLocaleDateString()}\n线索状态：${info[8]}\n`}
-          ).join('➖➖➖➖➖➖➖➖➖➖➖\n')
-        }
-        if (churchArr.length > 0) {
-          churchText = `\n\n🏠 交教会重复 ${churchArr.length} 个`
-        }
-        backgroundColor.push(['red'])
-        notes.push([`重复 ${arr.length} 个\n\n${text}${churchText}`])
-      } else {
-        backgroundColor.push([''])
-        notes.push([''])
-      }
-    }
-  }
-  orig.setBackgrounds(backgroundColor)
-  orig.setNotes(notes)
-}");
-  // 把你的代码直接粘贴到这两个反引号之间
+
+  return columnNumber;
 }`
-            },
-            '我的新脚本.gs': {
-                icon: 'code',
-                code: `// 在这里粘贴你的第三个脚本...`
             }
         };
         // ⬆️ 修改区域结束 ⬆️
-
 
         // 下面是网页的运行逻辑，不需要修改
         const fileListParams = document.getElementById('file-list');
@@ -211,4 +120,24 @@ function detectingDuplicates () {
                 const fileData = scriptLibrary[fileName];
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
-                fileItem.onclick = () => loadCode
+                fileItem.onclick = () => loadCode(fileName);
+                fileItem.innerHTML = '<span class="material-icons file-icon">' + fileData.icon + '</span>' + fileName;
+                fileListParams.appendChild(fileItem);
+                
+                if (index === 0) loadCode(fileName);
+            });
+        }
+
+        function loadCode(fileName) {
+            currentFileNameParams.innerText = fileName;
+            codeDisplayParams.textContent = scriptLibrary[fileName].code;
+            
+            const allItems = document.querySelectorAll('.file-item');
+            allItems.forEach(item => item.classList.remove('active'));
+            Array.from(allItems).find(item => item.innerText.includes(fileName)).classList.add('active');
+        }
+
+        initFileList();
+    </script>
+</body>
+</html>
