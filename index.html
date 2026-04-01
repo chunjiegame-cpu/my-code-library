@@ -36,13 +36,8 @@
         #code-header h2 { margin: 0; font-size: 16px; font-weight: 400; }
         #code-container { flex: 1; overflow: auto; padding: 0; position: relative; }
         
-        /* 代码显示样式 - 使用 Google 风格的浅色语法高亮 */
+        /* 代码显示样式 */
         pre { margin: 0; padding: 16px; font-family: 'Roboto Mono', monospace; font-size: 13px; line-height: 1.5; tab-size: 2; color: #3c4043; }
-        .pl-k { color: #d73a49; } /* 关键字 */
-        .pl-s { color: #183691; } /* 字符串 */
-        .pl-c { color: #6a737d; } /* 注释 */
-        .pl-en { color: #6f42c1; } /* 函数名 */
-        .pl-v { color: #e36209; } /* 变量 */
 
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Roboto+Mono&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
@@ -72,12 +67,12 @@
             <h2 id="current-file-name">请选择文件</h2>
         </div>
         <div id="code-container">
-            <pre id="code-display"><span class="pl-c">// 你的脚本代码库</span>
-<span class="pl-c">// 点击左侧文件查看代码...</span></pre>
+            <pre id="code-display">// 你的脚本代码库
+// 点击左侧文件查看代码...</pre>
         </div>
     </div>
 
-<script>
+    <script>
         // ⬇️ 以后你只需要在这里添加或修改你的脚本 ⬇️
         const scriptLibrary = {
             'clearAK.gs': {
@@ -124,23 +119,4 @@
                 const fileData = scriptLibrary[fileName];
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
-                fileItem.onclick = () => loadCode(fileName);
-                fileItem.innerHTML = '<span class="material-icons file-icon">' + fileData.icon + '</span>' + fileName;
-                fileListParams.appendChild(fileItem);
-                
-                if (index === 0) loadCode(fileName);
-            });
-        }
-
-        function loadCode(fileName) {
-            currentFileNameParams.innerText = fileName;
-            // 使用 textContent 确保你粘贴的任何代码都能原样显示，不会错乱
-            codeDisplayParams.textContent = scriptLibrary[fileName].code;
-            
-            const allItems = document.querySelectorAll('.file-item');
-            allItems.forEach(item => item.classList.remove('active'));
-            Array.from(allItems).find(item => item.innerText.includes(fileName)).classList.add('active');
-        }
-
-        initFileList();
-    </script>
+                fileItem.onclick = () => loadCode
