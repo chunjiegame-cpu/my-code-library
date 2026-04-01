@@ -6,7 +6,7 @@
     <style>
         :root {
             --google-blue: #1a73e8;
-            --sidebar-bg: #f8f9fa;
+            --sidebar-bg: #f8f9fa; 
             --code-bg: #ffffff; /* 现代代码编辑器多用浅色 */
             --text-color: #3c4043;
             --border-color: #dadce0;
@@ -96,7 +96,99 @@
             '自动修复.gs': {
                 icon: 'build',
                 code: `function autoRepair() {
-  console.log("正在修复...");
+  console.log("function clearTreeSheetsOnly() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheets = spreadsheet.getSheets();
+
+  // 循环检查每一个分页
+  for (var i = 0; i < sheets.length; i++) {
+    var sheet = sheets[i];
+    var sheetName = sheet.getName();
+
+    // 只有名字以 🌳 开头的分页才处理
+    if (sheetName.startsWith("🌳")) {
+      
+      var maxRows = sheet.getMaxRows();
+      var startRow = 4; // 从第4行开始
+
+      if (maxRows >= startRow) {
+        var numRows = maxRows - startRow + 1;
+
+        // --- 处理 AE 列 (第31列) ---
+        var rangeAE = sheet.getRange(startRow, 31, numRows, 1);
+        rangeAE.clear();              // 清除内容和格式
+        rangeAE.clearNote();          // 【新增】强制清除备注
+        rangeAE.clearDataValidations();// 【额外保险】清除下拉框等验证规则
+
+        // --- 处理 AK 列 (第37列) ---
+        var rangeAK = sheet.getRange(startRow, 37, numRows, 1);
+        rangeAK.clear();              // 清除内容和格式
+        rangeAK.clearNote();          // 【新增】强制清除备注
+        rangeAK.clearDataValidations();// 【额外保险】清除下拉框等验证规则
+      }
+    }
+  }
+  // 这里不再有弹窗代码
+}
+
+function detectingDuplicates () {
+  const list = [
+    '17XkqB0zh7CpeuMKmUwkorkxfCmlnpcyiDG0awugA5ZM',
+    '1lMr-JKGK3Z3CYmhuMkaBADi10_Y74iAsfTTUSvpKVDE',
+    '1kxP_XNWdYzrhJweTFLXka8nltiO7hqWtmIJPoCgFLGE'
+  ]
+  const data = []
+  for (const sheetId of list) {
+    const values = Sheets.Spreadsheets.Values.get(sheetId, '压缩!C:D').values
+    for (let i = 0; i < values.length; i++) {
+      if (sheetId !== '1lMr-JKGK3Z3CYmhuMkaBADi10_Y74iAsfTTUSvpKVDE') {
+        if (values[i][1] !== '哥伦比亚9点半队') {
+          data.push([values[i][0], values[i][1]])
+        }
+      } else {
+        data.push([values[i][0], values[i][1]])
+      }
+    }
+  }
+  const churchData = Sheets.Spreadsheets.Values.get('1Yslef5olbO3BQAtaPHekyhX7b-oLxzfVUPUoL7dqcDU', '精简!C:C').values
+  const orig = SpreadsheetApp.getActiveSheet().getRange('R3:R')
+  const origIds = orig.getDisplayValues()
+  const backgroundColor = []
+  const notes = []
+  for (let i = 0; i < origIds.length; i++) {
+    const id = origIds[i][0]
+    if (!id || id.includes('http')) {
+      backgroundColor.push([''])
+      notes.push([''])
+    } else {
+      const arr = data.filter(x => (x[0] || '').includes(id))
+      const churchArr = churchData.filter(x => (x[0] || '').includes(id))
+      if (arr.length > 1 || churchArr.length > 0) {
+        let text = ''
+        let churchText = ''
+        if (arr.length > 1) {
+            text = arr.map(x => {
+            const info = x[0].split('☢')
+            const serialNumber = Number(info[7])
+            const date = new Date(1899, 11, 30)
+            date.setDate(date.getDate() + serialNumber)
+            return `队：${info[9]}_${x[1]}\n摸底人员：${info[10]}\n提交日期：${date.toLocaleDateString()}\n线索状态：${info[8]}\n`}
+          ).join('➖➖➖➖➖➖➖➖➖➖➖\n')
+        }
+        if (churchArr.length > 0) {
+          churchText = `\n\n🏠 交教会重复 ${churchArr.length} 个`
+        }
+        backgroundColor.push(['red'])
+        notes.push([`重复 ${arr.length} 个\n\n${text}${churchText}`])
+      } else {
+        backgroundColor.push([''])
+        notes.push([''])
+      }
+    }
+  }
+  orig.setBackgrounds(backgroundColor)
+  orig.setNotes(notes)
+}");
   // 把你的代码直接粘贴到这两个反引号之间
 }`
             },
