@@ -117,6 +117,285 @@ function 列字母转数字(columnLetter) {
 
   return columnNumber;
 }`
+},
+'🔒 记录锁定脚本（自动解锁版）.gs': {
+                icon: 'code',  // 随便选个图标，比如 code (代码), build (扳手), description (文档)
+                code: `function myNewScript() {
+  console.log("/**
+ * 🔒 记录锁定脚本（自动解锁版）
+ * 功能：
+ * 1. 自定义菜单：锁定/解除锁定 BI5:BI350
+ * 2. 即时反馈提示（toast + alert）
+ * 3. 优化保护操作性能
+ * 4. ⭐ 新增：锁定后自定义分钟自动解锁，防止忘记解锁
+ */
+
+// ============================================
+// ⭐ 自动解锁时间设置（分钟），可按需修改
+// ============================================
+var AUTO_UNLOCK_MINUTES = 20;
+
+
+// 1️⃣ 创建自定义菜单
+function addLockColumnMenu() {
+  var ui = SpreadsheetApp.getUi();
+  
+  ui.createMenu("🔒记录锁定")
+    .addItem("🔒记录锁定", "lockColumnBI") 
+    .addItem("💡解除锁定", "unlockColumnBI_Menu")
+    .addToUi();
+}
+
+function onInstall(e) {
+  addLockColumnMenu();
+}
+
+// ✅ 菜单点击时走这里
+function unlockColumnBI_Menu() {
+  unlockColumnBI(true);
+}
+
+
+// 2️⃣ 锁定函数（BI5:BI350）— ⭐ 已加入自动解锁触发器
+function lockColumnBI() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui = SpreadsheetApp.getUi();
+  var sheet = ss.getActiveSheet();
+  var targetA1 = "BI5:BI350";
+  var range = sheet.getRange(targetA1);
+
+  var allowedEditors = [
+    "lihzi20181217@gmail.com",
+    "wulinda123456@gmail.com",
+    "zhix274@gmail.com",
+    "lisataylor0200@gmail.com"
+  ];
+  var me = Session.getEffectiveUser().getEmail();
+  if (allowedEditors.indexOf(me) === -1) allowedEditors.push(me);
+
+  try {
+    ss.toast("🔒 正在锁定 BI 列…");
+    SpreadsheetApp.flush();
+
+    // 查找已有保护
+    var protections = sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+    var protection = null;
+    for (var i = 0; i < protections.length; i++) {
+      try {
+        var pRange = protections[i].getRange();
+        if (pRange && pRange.getA1Notation() === targetA1) {
+          protection = protections[i];
+          break;
+        }
+      } catch (e) {}
+    }
+
+    if (!protection) {
+      protection = range.protect().setDescription("LOCK_BI_5_350");
+    } else {
+      protection.setDescription("LOCK_BI_5_350");
+    }
+
+    // 优化：仅在编辑者变化时更新
+    var currentEditors = normalizeEditors(protection.getEditors ? protection.getEditors() : []);
+    var same = allowedEditors.length === currentEditors.length &&
+               allowedEditors.every(function(e){ return currentEditors.indexOf(e) !== -1; });
+
+    if (!same) {
+      try { protection.removeEditors(protection.getEditors()); } catch(e){}
+      protection.addEditors(allowedEditors);
+    }
+
+    if (protection.canDomainEdit && protection.canDomainEdit()) {
+      protection.setDomainEdit(false);
+    }
+
+    // ============================================
+    // ⭐ 新增：设置自动解锁触发器
+    // ============================================
+    clearAutoUnlockTriggers();  // 先清除之前的触发器（防止重复）
+    
+    ScriptApp.newTrigger('autoUnlockBI')
+      .timeBased()
+      .after(AUTO_UNLOCK_MINUTES * 60 * 1000)  // 转换为毫秒
+      .create();
+    
+    // 记录锁定信息（方便追踪是谁锁的）
+    var props = PropertiesService.getScriptProperties();
+    props.setProperty('lockedBy', me);
+    props.setProperty('lockedAt', new Date().toISOString());
+    props.setProperty('lockedSheet', sheet.getName());
+    // ============================================
+
+    ss.toast("✅ 已锁定 BI 列！" + AUTO_UNLOCK_MINUTES + "分钟后将自动解锁", "提示", 5);
+
+  } catch (err) {
+    ui.alert("❌ 锁定失败: " + err.message);
+  }
+}
+
+
+// 3️⃣ 解锁函数（整列 BI）— ⭐ 已加入清除触发器逻辑
+function unlockColumnBI(fromMenu) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui = SpreadsheetApp.getUi();
+  var sheet = ss.getActiveSheet();
+
+  try {
+    ss.toast("🔓 正在解除 BI 列锁定…");
+    SpreadsheetApp.flush();
+
+    var protections = sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+    var found = false;
+
+    for (var i = 0; i < protections.length; i++) {
+      try {
+        var pRange = protections[i].getRange();
+        if (pRange && pRange.getColumn() === 61) {
+          protections[i].remove();
+          found = true;
+        }
+      } catch (e) {}
+    }
+
+    // ============================================
+    // ⭐ 新增：手动解锁时，清除自动解锁触发器
+    // ============================================
+    clearAutoUnlockTriggers();
+    
+    // 清除锁定记录
+    var props = PropertiesService.getScriptProperties();
+    props.deleteProperty('lockedBy');
+    props.deleteProperty('lockedAt');
+    props.deleteProperty('lockedSheet');
+    // ============================================
+
+    if (fromMenu) {
+      ui.alert(found ? "✅ BI列权限已解除，所有用户可以编辑！"
+                     : "⚠️ 没有发现 BI 列的保护区域。");
+    } else {
+      ss.toast(found ? "✅ BI列权限已解除！" : "⚠️ 没有发现 BI 列的保护区域。", "提示", 3);
+      Logger.log(found ? "✅ BI列权限已解除" : "⚠️ 没有发现 BI 列的保护区域");
+    }
+
+  } catch (err) {
+    ui.alert("❌ 解锁失败: " + err.message);
+  }
+}
+
+
+// ============================================
+// ⭐ 新增函数：自动解锁（由触发器调用）
+// ============================================
+function autoUnlockBI() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var props = PropertiesService.getScriptProperties();
+  var lockedSheet = props.getProperty('lockedSheet');
+  
+  // 尝试找到锁定时的工作表
+  var sheet;
+  if (lockedSheet) {
+    sheet = ss.getSheetByName(lockedSheet);
+  }
+  if (!sheet) {
+    sheet = ss.getActiveSheet();
+  }
+
+  // 解除该工作表上 BI 列的所有保护
+  var protections = sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+  var found = false;
+  for (var i = 0; i < protections.length; i++) {
+    try {
+      var pRange = protections[i].getRange();
+      if (pRange && pRange.getColumn() === 61) {
+        protections[i].remove();
+        found = true;
+      }
+    } catch (e) {}
+  }
+
+  // 清理
+  clearAutoUnlockTriggers();
+  props.deleteProperty('lockedBy');
+  props.deleteProperty('lockedAt');
+  props.deleteProperty('lockedSheet');
+
+  Logger.log("⏰ 自动解锁已执行 - 工作表: " + (lockedSheet || "未知") + ", 结果: " + (found ? "成功" : "未找到保护"));
+}
+
+
+// ============================================
+// ⭐ 新增函数：清除所有自动解锁触发器
+// ============================================
+function clearAutoUnlockTriggers() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'autoUnlockBI') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+}
+
+
+// 5️⃣ 辅助函数：把 protection.getEditors() 规范成 email 字符串数组
+function normalizeEditors(arr) {
+  if (!arr) return [];
+  return arr.map(function(u) {
+    if (!u) return "";
+    if (typeof u === "string") return u;
+    if (typeof u.getEmail === "function") {
+      try { return u.getEmail(); } catch (e) { return String(u); }
+    }
+    if (u.email) return u.email;
+    return String(u);
+  }).filter(function(x){ return x; });
+}
+
+
+/**
+ * 解除当前电子表格中所有工作表的 BI 列保护（不重建）
+ */
+function unprotectBIColumnAcrossAllSheets() {
+  var SS = SpreadsheetApp.getActiveSpreadsheet();
+  var sheets = SS.getSheets();
+  var BI_COL = 61;
+
+  sheets.forEach(function(sheet) {
+    var sheetName = sheet.getName();
+
+    var rangeProtections = sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+    rangeProtections.forEach(function(prot) {
+      var rng = prot.getRange();
+      if (!rng) return;
+      var startCol = rng.getColumn();
+      var endCol = startCol + rng.getNumColumns() - 1;
+
+      if (startCol <= BI_COL && BI_COL <= endCol) {
+        prot.remove();
+        Logger.log("已移除范围保护: " + sheetName + " - " + rng.getA1Notation());
+      }
+    });
+
+    var sheetProtections = sheet.getProtections(SpreadsheetApp.ProtectionType.SHEET);
+    sheetProtections.forEach(function(sProt) {
+      var unprotected = sProt.getUnprotectedRanges();
+      var biRange = sheet.getRange("BI:BI");
+      var alreadyThere = unprotected.some(r => r.getA1Notation() === biRange.getA1Notation());
+      if (!alreadyThere) {
+        unprotected.push(biRange);
+        sProt.setUnprotectedRanges(unprotected);
+        Logger.log("已在整表保护中解除 BI 列: " + sheetName);
+      }
+    });
+
+  });
+
+  SpreadsheetApp.flush();
+  Logger.log("所有工作表的 BI 列保护已解除。");
+}");
+  // 把你的新代码直接粘贴到这两个反引号之间
+}`
+            
             }
         };
         // ⬆️ 修改区域结束 ⬆️
