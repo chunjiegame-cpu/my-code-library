@@ -32,8 +32,16 @@
 
         /* 3. 右侧代码主区域 */
         #main-content { flex: 1; display: flex; flex-direction: column; background-color: var(--code-bg); }
-        #code-header { height: 48px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; padding: 0 16px; background-color: #ffffff; }
+        
+        /* 修改了头部布局，让按钮靠右对齐 */
+        #code-header { height: 48px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 16px; background-color: #ffffff; }
         #code-header h2 { margin: 0; font-size: 16px; font-weight: 400; }
+        
+        /* 新增：一键复制按钮样式 */
+        .copy-btn { background-color: #ffffff; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); padding: 6px 12px; cursor: pointer; display: flex; align-items: center; font-size: 13px; font-weight: 500; transition: background-color 0.2s; outline: none; }
+        .copy-btn:hover { background-color: #f1f3f4; }
+        .copy-btn .material-icons { font-size: 16px; margin-right: 6px; }
+
         #code-container { flex: 1; overflow: auto; padding: 0; position: relative; }
         
         /* 代码显示样式 */
@@ -64,6 +72,10 @@
     <div id="main-content">
         <div id="code-header">
             <h2 id="current-file-name">请选择文件</h2>
+            <button class="copy-btn" id="copy-button" onclick="copyCode()">
+                <span class="material-icons" id="copy-icon">content_copy</span>
+                <span id="copy-text">复制代码</span>
+            </button>
         </div>
         <div id="code-container">
             <pre id="code-display">// 你的脚本代码库
@@ -135,6 +147,32 @@ function 列字母转数字(columnLetter) {
             const allItems = document.querySelectorAll('.file-item');
             allItems.forEach(item => item.classList.remove('active'));
             Array.from(allItems).find(item => item.innerText.includes(fileName)).classList.add('active');
+        }
+
+        // 新增：一键复制代码功能
+        function copyCode() {
+            const codeToCopy = codeDisplayParams.textContent;
+            navigator.clipboard.writeText(codeToCopy).then(() => {
+                const copyIcon = document.getElementById('copy-icon');
+                const copyText = document.getElementById('copy-text');
+                
+                // 变成成功状态：打勾图标，绿色文字
+                copyIcon.innerText = 'check';
+                copyIcon.style.color = '#1e8e3e';
+                copyText.innerText = '已复制!';
+                copyText.style.color = '#1e8e3e';
+                
+                // 2秒后恢复原样
+                setTimeout(() => {
+                    copyIcon.innerText = 'content_copy';
+                    copyIcon.style.color = '';
+                    copyText.innerText = '复制代码';
+                    copyText.style.color = '';
+                }, 2000);
+            }).catch(err => {
+                console.error('复制失败:', err);
+                alert('复制失败，请手动选择复制。');
+            });
         }
 
         initFileList();
