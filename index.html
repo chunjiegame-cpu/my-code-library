@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>我的脚本库 - Google Apps Script 风格</title>
+    <style>
+        :root {
+            --google-blue: #1a73e8;
+            --sidebar-bg: #f8f9fa;
+            --code-bg: #ffffff; /* 现代代码编辑器多用浅色 */
+            --text-color: #3c4043;
+            --border-color: #dadce0;
+        }
+        body { display: flex; margin: 0; font-family: 'Roboto', 'Noto Sans SC', sans-serif; height: 100vh; color: var(--text-color); font-size: 14px; overflow: hidden; }
+        
+        /* 1. 最左侧图标栏 */
+        #icon-bar { width: 48px; background-color: #ffffff; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; padding-top: 10px; }
+        .icon-item { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; cursor: pointer; color: #5f6368; }
+        .icon-item:hover { background-color: #f1f3f4; color: var(--google-blue); }
+        .icon-item.active { background-color: #e8f0fe; color: var(--google-blue); }
+
+        /* 2. 文件列表栏 */
+        #file-sidebar { width: 220px; background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
+        #file-header { padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        #file-header h3 { margin: 0; font-size: 14px; font-weight: 500; }
+        #file-list { flex: 1; overflow-y: auto; padding-top: 8px; }
+        .file-item { padding: 6px 16px 6px 32px; cursor: pointer; position: relative; display: flex; align-items: center; color: #202124; }
+        .file-item:hover { background-color: #e8f0fe; }
+        .file-item.active { background-color: #e8f0fe; color: var(--google-blue); font-weight: 500; }
+        .file-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background-color: var(--google-blue); border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+        .file-icon { margin-right: 8px; font-size: 16px; opacity: 0.7; }
+
+        /* 3. 右侧代码主区域 */
+        #main-content { flex: 1; display: flex; flex-direction: column; background-color: var(--code-bg); }
+        #code-header { height: 48px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; padding: 0 16px; background-color: #ffffff; }
+        #code-header h2 { margin: 0; font-size: 16px; font-weight: 400; }
+        #code-container { flex: 1; overflow: auto; padding: 0; position: relative; }
+        
+        /* 代码显示样式 - 使用 Google 风格的浅色语法高亮 */
+        pre { margin: 0; padding: 16px; font-family: 'Roboto Mono', monospace; font-size: 13px; line-height: 1.5; tab-size: 2; color: #3c4043; }
+        .pl-k { color: #d73a49; } /* 关键字 */
+        .pl-s { color: #183691; } /* 字符串 */
+        .pl-c { color: #6a737d; } /* 注释 */
+        .pl-en { color: #6f42c1; } /* 函数名 */
+        .pl-v { color: #e36209; } /* 变量 */
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Roboto+Mono&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+
+    <div id="icon-bar">
+        <div class="icon-item" title="项目概览"><span class="material-icons">info</span></div>
+        <div class="icon-item active" title="编辑器"><span class="material-icons">code</span></div>
+        <div class="icon-item" title="触发器"><span class="material-icons">schedule</span></div>
+        <div class="icon-item" title="执行"><span class="material-icons">playlist_play</span></div>
+        <div class="icon-item" title="设置"><span class="material-icons">settings</span></div>
+    </div>
+
+    <div id="file-sidebar">
+        <div id="file-header">
+            <h3>文件</h3>
+            <span class="material-icons" style="font-size: 18px; color: #5f6368; cursor: pointer;">add</span>
+        </div>
+        <div id="file-list">
+            </div>
+    </div>
+
+    <div id="main-content">
+        <div id="code-header">
+            <h2 id="current-file-name">请选择文件</h2>
+        </div>
+        <div id="code-container">
+            <pre id="code-display"><span class="pl-c">// 你的脚本代码库</span>
+<span class="pl-c">// 点击左侧文件查看代码...</span></pre>
+        </div>
+    </div>
+
+    <script>
+        // 你的脚本代码库数据库 (这里存放你从原图复制来的代码)
+        const scriptLibrary = {
+            'clearAK.gs': {
+                icon: 'description',
+                code: `<span class="pl-k">function</span> <span class="pl-en">clearTreeSheetsOnly</span>() {
+  <span class="pl-k">var</span> <span class="pl-v">spreadsheet</span> \= <span class="pl-v">SpreadsheetApp</span>.<span class="pl-en">getActiveSpreadsheet</span>();
+  <span class="pl-k">var</span> <span class="pl-v">sheets</span> \= <span class="pl-v">spreadsheet</span>.<span class="pl-en">getSheets</span>();
+  
+  <span class="pl-c">// 循环检查每一个分页</span>
+  <span class="pl-k">for</span> (<span class="pl-k">var</span> <span class="pl-v">i</span> \= <span class="pl-c1">0</span>; <span class="pl-v">i</span> < <span class="pl-v">sheets</span>.<span class="pl-v">length</span>; <span class="pl-v">i</span>++) {
+    <span class="pl-k">var</span> <span class="pl-v">sheet</span> \= <span class="pl-v">sheets</span>[<span class="pl-v">i</span>];
+    <span class="pl-k">var</span> <span class="pl-v">sheetName</span> \= <span class="pl-v">sheet</span>.<span class="pl-en">getName</span>();
+    
+    <span class="pl-c">// 只有名字以 🌴 开头的分页才处理</span>
+    <span class="pl-k">if</span> (<span class="pl-v">sheetName</span>.<span class="pl-en">startsWith</span>(<span class="pl-s">"🌴"</span>)) {
+      <span class="pl-c">// ... 你的更多代码 ...</span>
+      <span class="pl-c">// rangeAE.clear();</span>
+    }
+  }
+}`
+            },
+            '自动修复.gs': {
+                icon: 'build',
+                code: `<span class="pl-k">function</span> <span class="pl-en">autoRepairData</span>() {
+  <span class="pl-c">// 这是一个示例修复脚本</span>
+  <span class="pl-v">console</span>.<span class="pl-en">log</span>(<span class="pl-s">"正在扫描数据错误..."</span>);
+  <span class="pl-v">Utilities</span>.<span class="pl-en">sleep</span>(<span class="pl-c1">1000</span>);
+  <span class="pl-v">console</span>.<span class="pl-en">log</span>(<span class="pl-s">"未发现明显错误。"</span>);
+}`
+            },
+            '修复日期.gs': { icon: 'calendar_today', code: `// 日期修复逻辑...` },
+            '记录锁定.gs': { icon: 'lock', code: `// 锁定逻辑...` }
+        };
+
+        const fileListParams = document.getElementById('file-list');
+        const codeDisplayParams = document.getElementById('code-display');
+        const currentFileNameParams = document.getElementById('current-file-name');
+
+        // 初始化文件列表
+        function initFileList() {
+            fileListParams.innerHTML = ''; // 清空
+            Object.keys(scriptLibrary).forEach((fileName, index) => {
+                const fileData = scriptLibrary[fileName];
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.onclick = () => loadCode(fileName);
+                fileItem.innerHTML = \`<span class="material-icons file-icon">\${fileData.icon}</span>\${fileName}\`;
+                fileListParams.appendChild(fileItem);
+                
+                // 默认加载第一个文件
+                if (index === 0) {
+                    loadCode(fileName);
+                }
+            });
+        }
+
+        // 加载代码
+        function loadCode(fileName) {
+            // 更新标题
+            currentFileNameParams.innerText = fileName;
+            // 更新代码内容 (使用 innerHTML 以便显示高亮)
+            codeDisplayParams.innerHTML = scriptLibrary[fileName].code;
+            
+            // 更新高亮状态
+            const allItems = document.querySelectorAll('.file-item');
+            allItems.forEach(item => item.classList.remove('active'));
+            // 找到对应的节点并添加 active
+            Array.from(allItems).find(item => item.innerText.includes(fileName)).classList.add('active');
+        }
+
+        // 启动
+        initFileList();
+
+    </script>
+</body>
+</html>
